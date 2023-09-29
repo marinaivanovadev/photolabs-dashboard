@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import Loading from "./Loading";
 import Panel from "./Panel";
+import { getTotalPhotos, getTotalTopics, getUserWithMostUploads, getUserWithLeastUploads } from "helpers/selectors";
 
 import classnames from "classnames";
 
@@ -8,30 +9,33 @@ const data = [
   {
     id: 1,
     label: "Total Photos",
-    value: 10
+    getValue: getTotalPhotos
   },
   {
     id: 2,
     label: "Total Topics",
-    value: 4
+    getValue: getTotalTopics
   },
   {
     id: 3,
     label: "User with the most uploads",
-    value: "Allison Saeng"
+    getValue: getUserWithMostUploads
   },
   {
     id: 4,
     label: "User with the least uploads",
-    value: "Lukas Souza"
+    getValue: getUserWithLeastUploads
   }
 ];
 
 class Dashboard extends Component {
   state = {
-    loading: false,
-    focused: null
+    loading: true,
+    focused: null,
+    photos: [],
+    topics: []
   };
+
   selectPanel(id) {
     this.setState((previousState) => ({
       focused: previousState.focused !== null ? null : id
@@ -44,6 +48,18 @@ class Dashboard extends Component {
     if (focused) {
       this.setState({ focused });
     }
+
+    const urlsPromise = ["/api/photos", "/api/topics"].map((url) =>
+      fetch(url).then((response) => response.json())
+    );
+
+    Promise.all(urlsPromise).then(([photos, topics]) => {
+      this.setState({
+        loading: false,
+        photos: photos,
+        topics: topics
+      });
+    });
   }
 
   componentDidUpdate(previousProps, previousState) {
@@ -51,7 +67,6 @@ class Dashboard extends Component {
       localStorage.setItem("focused", JSON.stringify(this.state.focused));
     }
   }
-
 
   render() {
     const dashboardClasses = classnames("dashboard", {
@@ -70,8 +85,8 @@ class Dashboard extends Component {
       <Panel
         key={panel.id}
         label={panel.label}
-        value={panel.value}
-        onSelect={(event) => this.selectPanel(panel.id)}
+        value={panel.getValue(this.state)}
+        onSelect={() => this.selectPanel(panel.id)}
       />
     ));
 
