@@ -29,30 +29,40 @@ const data = [
 
 class Dashboard extends Component {
   state = {
-    loading: false
+    loading: false,
+    focused: null
   };
 
+  selectPanel(id) {
+    this.setState({
+      focused: id
+    });
+  }
+
   render() {
-    const dashboardClasses = classnames("dashboard");
+    const dashboardClasses = classnames("dashboard", {
+      "dashboard--focused": this.state.focused
+    });
 
     if (this.state.loading) {
       return <Loading />;
     }
 
-    // Map over the data array and create a Panel component for each item
-    const panels = data.map((panel) => (
+    const panels = (
+      this.state.focused
+        ? data.filter((panel) => this.state.focused === panel.id)
+        : data
+    ).map((panel) => (
       <Panel
-        key={panel.id} // Use panel.id as the key
-        id={panel.id} // Pass panel.id as a prop
-        label={panel.label} // Pass panel.label as a prop
-        value={panel.value} // Pass panel.value as a prop
+        key={panel.id}
+        id={panel.id}
+        label={panel.label}
+        value={panel.value}
+        onSelect={this.selectPanel}
       />
     ));
 
-    return (<main className={dashboardClasses}>
-      {panels}
-    </main>
-    );
+    return <main className={dashboardClasses}>{panels}</main>;
   }
 }
 
